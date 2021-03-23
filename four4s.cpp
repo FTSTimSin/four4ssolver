@@ -745,7 +745,7 @@ int main()
     f.addUnaryOperations(3);
 
     f.addBinaryOperations(1, 3, true);
-    f.addBinaryOperations(2, 2. true);
+    f.addBinaryOperations(2, 2, true);
     f.addUnaryOperations(4, true);
 
     std::vector<Fraction> keys;

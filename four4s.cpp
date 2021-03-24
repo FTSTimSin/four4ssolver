@@ -197,7 +197,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count);
+                                ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count);
                         }
                     }
                     
@@ -233,7 +233,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count);
+                                ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count);
                         }
                     }
                     
@@ -269,7 +269,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1);
+                                ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1);
                         }
                     }
                     
@@ -794,7 +794,6 @@ int main()
     f.addBinaryOperations(1, 3, true);
     f.addBinaryOperations(2, 2, true);
     f.addUnaryOperations(4, true);
-
     std::vector<Fraction> keys;
     for (auto const& [key, val] : f.getExpressions().at(3))
     {

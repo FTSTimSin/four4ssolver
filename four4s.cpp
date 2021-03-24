@@ -10,6 +10,19 @@
 
 #define UNARY_LIMIT 4
 
+#define ADDITION_PURITY 0
+#define SUBTRACTION_PURITY 0
+#define MULTIPLICATION_PURITY 0
+#define DIVISION_PURITY 0
+#define SQRT_PURITY 0
+#define FACTORIAL_PURITY 0
+#define POWER_PURITY 0
+#define DECIMAL_PURITY 0
+#define REPEATING_DEC_PURITY 2
+#define ROOT_PURITY 3
+#define GAMMA_PURITY 4
+#define PERCENT_PURITY 5
+
 
 namespace std
 {
@@ -32,7 +45,7 @@ std::string operator * (std::string a, int b) {
 }
 
 
-Four4s::Four4s(int n, int a)
+Four4s::Four4s(int n, int a, bool addPercent)
     :num{n}, amount{a}
 {
     if (n >= 10 || n < 0)
@@ -60,7 +73,12 @@ Four4s::Four4s(int n, int a)
         std::string basicNum = (std::to_string(num) * (i + 1));
         try
         {
-            expressions.at(i).emplace(Fraction(std::stol(basicNum), 1), ExpressionInfo(basicNum, 0));
+            expressions.at(i).emplace(Fraction(std::stol(basicNum), 1), ExpressionInfo(basicNum, 0, 0));
+
+            if (addPercent)
+            {
+                expressions.at(i).emplace(Fraction(std::stol(basicNum), 100), ExpressionInfo(basicNum + "%", 0, PERCENT_PURITY));
+            }
         }
         catch(OutOfBoundsException const & e)
         {
@@ -74,7 +92,13 @@ Four4s::Four4s(int n, int a)
                 try
                 {
                     std::string decimalNum = (basicNum.substr(0, j) + "." + basicNum.substr(j, basicNum.length()));
-                    expressions.at(i).emplace(Fraction(std::stol(basicNum), divideBy), ExpressionInfo(decimalNum, 1));
+                    expressions.at(i).emplace(Fraction(std::stol(basicNum), divideBy), ExpressionInfo(decimalNum, 1, DECIMAL_PURITY));
+
+                    if (addPercent)
+                    {
+                        expressions.at(i).emplace(Fraction(std::stol(basicNum), divideBy * 100), ExpressionInfo(decimalNum + "%", 0, PERCENT_PURITY));
+                    }
+
                     divideBy *= 10;
                 }
                 catch(OutOfBoundsException const & e)
@@ -85,8 +109,13 @@ Four4s::Four4s(int n, int a)
 
         if (i == 0 && allowRepeatingDecimal)
         {
-            expressions.at(i).emplace(Fraction(std::stol(basicNum), 9), ExpressionInfo(("." + basicNum + "..."), 1));
+            expressions.at(i).emplace(Fraction(std::stol(basicNum), 9), ExpressionInfo(("." + basicNum + "..."), 1, REPEATING_DEC_PURITY));
+            if (addPercent)
+            {
+                expressions.at(i).emplace(Fraction(std::stol(basicNum), 900), ExpressionInfo(("." + basicNum + "...%"), 0, PERCENT_PURITY));
+            }
         }
+
     }
 }
 
@@ -98,12 +127,10 @@ std::vector<std::unordered_map<Fraction, ExpressionInfo>> & Four4s::getExpressio
 void Four4s::addUnaryOperations(int d, bool integerOnly)
 {
     int digits = d - 1;
-    std::unordered_map<Fraction, int> smallestComplexities;
     std::vector<Fraction> frontier;
     for (auto const& [key, val] : expressions.at(digits))
     {
         frontier.push_back(key);
-        smallestComplexities.emplace(key, val.complexity);
     }
 
     while (!frontier.empty())
@@ -121,20 +148,20 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                     (ei.sqrt_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
+                    int resultPurity = std::max(ei.purity, SQRT_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count));
-                        smallestComplexities.emplace(result, ei.complexity + 1);
+                            result, ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count));
                         frontier.push_back(result);
                     }
                     else
                     {
-                        if (ei.complexity + 1 < smallestComplexities.at(result))
+                        if (resultPurity < expressions.at(digits).at(result).purity ||
+                            (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count);
-                            smallestComplexities.at(result) = ei.complexity + 1;
+                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count);
                         }
                     }
                     
@@ -157,20 +184,20 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                     (ei.sqrt_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
+                    int resultPurity = std::max(ei.purity, FACTORIAL_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count));
-                        smallestComplexities.emplace(result, ei.complexity + 1);
+                            result, ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count));
                         frontier.push_back(result);
                     }
                     else
                     {
-                        if (ei.complexity + 1 < smallestComplexities.at(result))
+                        if (resultPurity < expressions.at(digits).at(result).purity ||
+                            (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count);
-                            smallestComplexities.at(result) = ei.complexity + 1;
+                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count);
                         }
                     }
                     
@@ -193,20 +220,20 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                     (ei.sqrt_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
+                    int resultPurity = std::max(ei.purity, PERCENT_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count));
-                        smallestComplexities.emplace(result, ei.complexity + 1);
+                            result, ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count));
                         frontier.push_back(result);
                     }
                     else
                     {
-                        if (ei.complexity + 1 < smallestComplexities.at(result))
+                        if (resultPurity < expressions.at(digits).at(result).purity ||
+                            (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count);
-                            smallestComplexities.at(result) = ei.complexity + 1;
+                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count);
                         }
                     }
                     
@@ -229,20 +256,20 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                     (ei.sqrt_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
+                    int resultPurity = std::max(ei.purity, GAMMA_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1));
-                        smallestComplexities.emplace(result, ei.complexity + 1);
+                            result, ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1));
                         frontier.push_back(result);
                     }
                     else
                     {
-                        if (ei.complexity + 1 < smallestComplexities.at(result))
+                        if (resultPurity < expressions.at(digits).at(result).purity ||
+                            (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1);
-                            smallestComplexities.at(result) = ei.complexity + 1;
+                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1);
                         }
                     }
                     
@@ -284,6 +311,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), ADDITION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -291,25 +319,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val1.expression + ") + (" + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val1.expression + ") + (" + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -331,6 +360,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), SUBTRACTION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -338,25 +368,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val1.expression + ") - (" + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val1.expression + ") - (" + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -374,6 +405,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), SUBTRACTION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -381,25 +413,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val2.expression + ") - (" + val1.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val2.expression + ") - (" + val1.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -421,6 +454,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), MULTIPLICATION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -428,25 +462,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val1.expression + ") * (" + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val1.expression + ") * (" + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -468,6 +503,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), DIVISION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -475,25 +511,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val1.expression + ") / (" + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val1.expression + ") / (" + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -511,6 +548,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), DIVISION_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -518,25 +556,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val2.expression + ") / (" + val1.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val2.expression + ") / (" + val1.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -558,6 +597,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), POWER_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -565,25 +605,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val1.expression + ")^(" + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val1.expression + ")^(" + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -601,6 +642,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), POWER_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -608,25 +650,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("(" + val2.expression + ")^(" + val1.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("(" + val2.expression + ")^(" + val1.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -648,6 +691,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), ROOT_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
@@ -655,25 +699,26 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                 ExpressionInfo(
                                     ("root(" + val1.expression + ", " + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
                                         ("root(" + val1.expression + ", " + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -691,32 +736,34 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                         (!integerOnly || result.getDenominator() == 1) &&
                         !(NoNegatives && result < 0.0))
                     {
+                        int resultPurity = std::max(std::max(val1.purity, val2.purity), ROOT_PURITY);
                         if (expressions.at(totalDigits).count(result) == 0)
                         {
                             expressions.at(totalDigits).emplace(
                                 result, 
                                 ExpressionInfo(
-                                    ("root(" + val2.expression + ", " + val1.expression + ")"), 
+                                    ("root(" + val1.expression + ", " + val2.expression + ")"), 
                                     val1.complexity + val2.complexity + 1, 
+                                    resultPurity, 
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
                                     val1.gamma_count + val2.gamma_count));
-                            smallestComplexities.emplace(result, val1.complexity + val2.complexity + 1);
                         }
                         else
                         {
-                            if (val1.complexity + val2.complexity + 1 < smallestComplexities.at(result))
+                            if (resultPurity < expressions.at(totalDigits).at(result).purity ||
+                            (resultPurity == expressions.at(totalDigits).at(result).purity && val1.complexity + val2.complexity + 1 < expressions.at(totalDigits).at(result).complexity))
                             {
                                 expressions.at(totalDigits).at(result) =
                                     ExpressionInfo(
-                                        ("root(" + val2.expression + ", " + val1.expression + ")"), 
+                                        ("root(" + val1.expression + ", " + val2.expression + ")"), 
                                         val1.complexity + val2.complexity + 1, 
+                                        resultPurity, 
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
                                         val1.gamma_count + val2.gamma_count);
-                                smallestComplexities.at(result) = val1.complexity + val2.complexity + 1;
                             }
                         }
                     }
@@ -773,7 +820,10 @@ int main()
                 << std::endl
                 << std::endl;
         */
-        myfile << key.getValue() << ": " << val.expression << std::endl;
+        if (std::fmod(key.getValue(), 1.0) == 0.0)
+        {
+            myfile << key.getValue() << " (" << val.purity << ") = " << val.expression << std::endl;
+        }
     }
     myfile.close();
     std::cout << std::endl;

@@ -12,12 +12,13 @@ struct ExpressionInfo
 {
     std::string expression;
     int complexity;
+    int purity;
     int sqrt_count;
     int factorial_count;
     int percent_count;
     int gamma_count;
-    ExpressionInfo(std::string e, int c, int s=0, int f=0, int p=0, int g=0)
-        : expression{e}, complexity{c}, sqrt_count{s}, factorial_count{f}, percent_count{p}, gamma_count{g}
+    ExpressionInfo(std::string e, int c, int p, int sc=0, int fc=0, int pc=0, int gc=0)
+        : expression{e}, complexity{c}, purity{p}, sqrt_count{sc}, factorial_count{fc}, percent_count{pc}, gamma_count{gc}
     {
     }
 };
@@ -46,7 +47,7 @@ private:
     std::vector<std::unordered_map<Fraction, ExpressionInfo>> expressions;
 
 public:
-    Four4s(int n, int a);
+    Four4s(int n, int a, bool addPercent=false);
 
     std::vector<std::unordered_map<Fraction, ExpressionInfo>> & getExpressions();
 

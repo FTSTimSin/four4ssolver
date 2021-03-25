@@ -141,6 +141,11 @@ Fraction Fraction::sqrt() const
     return pow(Fraction(1, 2));
 }
 
+Fraction Fraction::square() const
+{
+    return pow(Fraction(2, 1));
+}
+
 Fraction Fraction::factorial() const
 {
     if (denominator != 1 || numerator < 0)

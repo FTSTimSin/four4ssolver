@@ -54,6 +54,7 @@ public:
     Fraction pow(const Fraction & f) const;
     Fraction root(const Fraction &f) const;
     Fraction sqrt() const;
+    Fraction square() const;
 
     Fraction factorial() const;
     Fraction gamma() const;

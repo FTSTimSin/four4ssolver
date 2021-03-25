@@ -17,8 +17,9 @@ struct ExpressionInfo
     int factorial_count;
     int percent_count;
     int gamma_count;
-    ExpressionInfo(std::string e, int c, int p, int sc=0, int fc=0, int pc=0, int gc=0)
-        : expression{e}, complexity{c}, purity{p}, sqrt_count{sc}, factorial_count{fc}, percent_count{pc}, gamma_count{gc}
+    int square_count;
+    ExpressionInfo(std::string e, int c, int p, int sc=0, int fc=0, int pc=0, int gc=0, int sqc=0)
+        : expression{e}, complexity{c}, purity{p}, sqrt_count{sc}, factorial_count{fc}, percent_count{pc}, gamma_count{gc}, square_count{sqc}
     {
     }
 };
@@ -36,6 +37,7 @@ private:
     bool allowFactorial;
     bool allowPercent;
     bool allowGamma;
+    bool allowSquare;
 
     bool allowAddition;
     bool allowSubtraction;

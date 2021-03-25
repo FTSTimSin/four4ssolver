@@ -22,6 +22,7 @@
 #define ROOT_PURITY 3
 #define GAMMA_PURITY 4
 #define PERCENT_PURITY 5
+#define SQUARE_PURITY 6
 
 
 namespace std
@@ -57,8 +58,9 @@ Four4s::Four4s(int n, int a, bool addPercent)
     allowRepeatingDecimal = true;
     allowSquareRoot = true;
     allowFactorial = true;
-    allowPercent = true;
+    allowPercent = false;
     allowGamma = true;
+    allowSquare = true;
 
     allowAddition = true;
     allowSubtraction = true;
@@ -152,7 +154,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count));
+                            result, ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count, ei.square_count));
                         frontier.push_back(result);
                     }
                     else
@@ -161,7 +163,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count);
+                                ExpressionInfo(("sqrt(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count + 1, ei.factorial_count, ei.percent_count, ei.gamma_count, ei.square_count);
                         }
                     }
                     
@@ -181,14 +183,14 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
             {
                 Fraction result = f.factorial();
                 if (
-                    (ei.sqrt_count < UNARY_LIMIT) &&
+                    (ei.factorial_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
                     int resultPurity = std::max(ei.purity, FACTORIAL_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count));
+                            result, ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count, ei.square_count));
                         frontier.push_back(result);
                     }
                     else
@@ -197,7 +199,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count);
+                                ExpressionInfo(("(" + ei.expression + ")!"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count + 1, ei.percent_count, ei.gamma_count, ei.square_count);
                         }
                     }
                     
@@ -217,14 +219,14 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
             {
                 Fraction result = f.percent();
                 if (
-                    (ei.sqrt_count < UNARY_LIMIT) &&
+                    (ei.percent_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
                     int resultPurity = std::max(ei.purity, PERCENT_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count));
+                            result, ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count, ei.square_count));
                         frontier.push_back(result);
                     }
                     else
@@ -233,7 +235,7 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count);
+                                ExpressionInfo(("(" + ei.expression + ")%"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count + 1, ei.gamma_count, ei.square_count);
                         }
                     }
                     
@@ -253,14 +255,14 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
             {
                 Fraction result = f.gamma();
                 if (
-                    (ei.sqrt_count < UNARY_LIMIT) &&
+                    (ei.gamma_count < UNARY_LIMIT) &&
                     ((!integerOnly || result.getDenominator() == 1)))
                 {
                     int resultPurity = std::max(ei.purity, GAMMA_PURITY);
                     if (expressions.at(digits).count(result) == 0)
                     {
                         expressions.at(digits).emplace(
-                            result, ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1));
+                            result, ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1, ei.square_count));
                         frontier.push_back(result);
                     }
                     else
@@ -269,7 +271,43 @@ void Four4s::addUnaryOperations(int d, bool integerOnly)
                             (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
                         {
                             expressions.at(digits).at(result) = 
-                                ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1);
+                                ExpressionInfo(("gamma(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count + 1, ei.square_count);
+                        }
+                    }
+                    
+                }
+            }
+            catch(IrrationalException const & e)
+            {
+            }
+            catch(OutOfBoundsException const & e)
+            {
+            }
+        }
+
+        if (allowSquare)
+        {
+            try
+            {
+                Fraction result = f.square();
+                if (
+                    (ei.square_count < UNARY_LIMIT) &&
+                    ((!integerOnly || result.getDenominator() == 1)))
+                {
+                    int resultPurity = std::max(ei.purity, SQUARE_PURITY);
+                    if (expressions.at(digits).count(result) == 0)
+                    {
+                        expressions.at(digits).emplace(
+                            result, ExpressionInfo(("square(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count, ei.square_count + 1));
+                        frontier.push_back(result);
+                    }
+                    else
+                    {
+                        if (resultPurity < expressions.at(digits).at(result).purity ||
+                            (resultPurity == expressions.at(digits).at(result).purity && ei.complexity + 1 < expressions.at(digits).at(result).complexity))
+                        {
+                            expressions.at(digits).at(result) = 
+                                ExpressionInfo(("square(" + ei.expression + ")"), ei.complexity + 1, resultPurity, ei.sqrt_count, ei.factorial_count, ei.percent_count, ei.gamma_count, ei.square_count + 1);
                         }
                     }
                     
@@ -323,7 +361,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -338,7 +377,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -372,7 +412,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -387,7 +428,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -417,7 +459,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -432,7 +475,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -466,7 +510,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -481,7 +526,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -515,7 +561,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -530,7 +577,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -560,7 +608,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -575,7 +624,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -609,7 +659,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -624,7 +675,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -654,7 +706,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -669,7 +722,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -703,7 +757,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -718,7 +773,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -748,7 +804,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                     val1.sqrt_count + val2.sqrt_count, 
                                     val1.factorial_count + val2.factorial_count, 
                                     val1.percent_count + val2.percent_count, 
-                                    val1.gamma_count + val2.gamma_count));
+                                    val1.gamma_count + val2.gamma_count,
+                                    val1.square_count + val2.square_count));
                         }
                         else
                         {
@@ -763,7 +820,8 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
                                         val1.sqrt_count + val2.sqrt_count, 
                                         val1.factorial_count + val2.factorial_count, 
                                         val1.percent_count + val2.percent_count, 
-                                        val1.gamma_count + val2.gamma_count);
+                                        val1.gamma_count + val2.gamma_count,
+                                        val1.square_count + val2.square_count);
                             }
                         }
                     }
@@ -784,7 +842,7 @@ void Four4s::addBinaryOperations(int d1, int d2, bool integerOnly, bool NoNegati
 int main()
 {
     
-    Four4s f = Four4s(4, 4);
+    Four4s f = Four4s(4, 4, true);
     f.addUnaryOperations(1);
     f.addBinaryOperations(1, 1);
     f.addUnaryOperations(2);
@@ -803,7 +861,7 @@ int main()
     std::sort(keys.begin(), keys.end());
 
     std::ofstream myfile;
-    myfile.open("four4s.txt");
+    myfile.open("four4swheelerpercent.txt");
 
     for (Fraction key: keys)
     {

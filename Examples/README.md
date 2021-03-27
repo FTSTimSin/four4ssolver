@@ -30,5 +30,3 @@ NOTE: David A. Wheeler also details a purity level 7 and 8, which have to do wit
 
 Of the first 10,000 numbers, my solutions are missing 857, including 1723, 2103, 2107, 2217, 2227, 2237, and 2487.
 Of the first 1,000,000 numbers, my solutions have 180,481 numbers solved, or 18.0%
-##  
-Please check out [The Definitive Four Fours Answer Key](https://dwheeler.com/fourfours/) if you are a fan of this puzzle. This is an incredible list of solutions from 0 to 40,000 and it is what inspired me to create this program.

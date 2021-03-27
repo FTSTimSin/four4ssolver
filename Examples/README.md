@@ -20,8 +20,8 @@ Of the first 1,000,000 numbers, my solutions have 404,129 numbers solved, or 40.
 This is a set of solutions from 0 to 1 million using the rules set by David A. Wheeler from [The Definitive Four Fours Answer Key](https://dwheeler.com/fourfours/). His purity scores are determined like this:
 * 0: addition, subtraction, multiplication, division, square root, factorial, and power
 * 1: Unused to my knowledge
-* 2: repeating decimal
-* 3: arbitrary root
+* 2: repeating decimal (I wrote it as .4... instead of .4~)
+* 3: arbitrary root (I wrote it as root(A, B) = A^(1 / B), instead of root(A, B) = B^(1 / A))
 * 4: gamma function
 * 5: percent sign. However unlike my rules, a percent sign can only follow a constant. For example, 4%, .4%, and .4...% would be valid but (sqrt(4))% and (4 + 4)% are invalid.
 * 6: square function
